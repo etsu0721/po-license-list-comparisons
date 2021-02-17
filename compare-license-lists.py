@@ -3,9 +3,8 @@
 import pandas as pd
 import sys
 
-# Define path variable to load appropriate license lists
+# Store command-line argument (DATE)
 DATE = sys.argv[1]
-PATH = r'C:\Users\elijah.sutton\Documents\OneDrive - Commonwealth of Kentucky\Division of Governance and Strategy\Project Management Branch\License Lists'
 
 def clean_o365_license_list(df):
     """
@@ -38,7 +37,7 @@ def read_in_o365_licenses(*licenses):
     """
     license_lists_dict = dict()
     for license in licenses:
-        license_lists_dict[license] = pd.read_excel(r'{}\{}\{}.xlsx'.format(PATH, DATE, license), engine='openpyxl')
+        license_lists_dict[license] = pd.read_excel(r'{}\{}.xlsx'.format(DATE, license), engine='openpyxl')
         license_lists_dict[license] = clean_o365_license_list(license_lists_dict[license])
     return license_lists_dict
 
@@ -81,7 +80,7 @@ def read_in_opm_license_list():
         dictionary: OPM Granted Licenses list partitioned by license type (and the keys are the license types matching the keys of O365's license list dict)
     """
     fname = 'PWA Licenses Tracker.xlsx'
-    df = pd.read_excel(r'{}\{}'.format(PATH, fname), sheet_name='Granted Licenses', engine='openpyxl')
+    df = pd.read_excel(fname, sheet_name='Granted Licenses', engine='openpyxl')
     df = clean_opm_license_list(df)
     license_list_dict = partition_opm_license_list(df)
     return license_list_dict
@@ -132,8 +131,8 @@ def compare_license_lists(dict1, dict2, dict1_name='O365 list', dict2_name='OPM 
         print()
         
         # Write differences to CSV files (and include all data elements of the DataFrame)
-        o365_df[ o365_df['User principal name'].isin(s1_minus_s2) ].sort_values(by='Last name').to_csv(r'{}\{}\{}-O365-minus-OPM.csv'.format(PATH, DATE, k), index=False)
-        opm_df[ opm_df['Email'].isin(s2_minus_s1) ].sort_values(by='Last Name').to_csv(r'{}\{}\{}-OPM-minus-O365.csv'.format(PATH, DATE, k), index=False)
+        o365_df[ o365_df['User principal name'].isin(s1_minus_s2) ].sort_values(by='Last name').to_csv(r'{}\{}-O365-minus-OPM.csv'.format(DATE, k), index=False)
+        opm_df[ opm_df['Email'].isin(s2_minus_s1) ].sort_values(by='Last Name').to_csv(r'{}\{}-OPM-minus-O365.csv'.format(DATE, k), index=False)
     return
 
 def main():
