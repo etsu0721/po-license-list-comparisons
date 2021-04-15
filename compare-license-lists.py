@@ -109,56 +109,36 @@ def read_in_opm_license_list():
     license_list_dict = partition_opm_license_list(df)
     return license_list_dict
 
-def compare_license_lists(dict1, dict2, dict1_name='O365 list', dict2_name='OPM list'):
-    """This function generates a summary of the comparison of license lits for each license type and displays it in the terminal.
-    This function also writes the differences (in both directions) and intersections of license assignees for each license type to separate CSV files.
+def compare_license_lists(dict1, dict2):
+    """This function computes a symmetric difference for each license list type and writes the results to Excel files
 
     Args:
         dict1 (dictionary): O365's license lists dictionary
         dict2 (dictionary): OPM's license lists dictionary
-        dict1_name (str, optional): A name to reference to dict1 in the output. Defaults to 'O365 list'.
-        dict2_name (str, optional): A name to reference to dict2 in the output. Defaults to 'OPM list'.
     """
     for k in dict1.keys():
-        # Define variables for easy use and readability in for loop
+        # Store license type DataFrame ina variable (for readability)
         o365_df = dict1[k]
         opm_df = dict2[k]
-        s1 = dict1[k]['User principal name']
-        s2 = dict2[k]['Email']
-        # s1 and s2 not cast to type 'set' here so to avoid removing duplicates
-
-        # Display summary of set differences 
-        # Print type of license being compared
-        print('Comparison of {} licenses:'.format(k))
-
-        # Print count of licenses of type k
-        print('\t{} has {} items.'.format(dict1_name, len(o365_df)))
-        print('\t{} has {} items.'.format(dict2_name, len(opm_df)))
-        print()
-
-        # Print count of unique UPNs/Emails
-        print('\t{} has {} unique items.'.format(dict1_name, len(s1.unique())))
-        print('\t{} has {} unique items.'.format(dict2_name, len(s2.unique())))
-        print()
-    
-        # Compute O365 minus OPM and print summary
-        s1_minus_s2 = set(s1).difference(set(s2))
-        print('\t{} minus {} differences: {}'.format(dict1_name, dict2_name, len(s1_minus_s2)))
-            
-        # Compute OPM minus O365 and print summary
-        s2_minus_s1 = set(s2).difference(set(s1))
-        print('\t{} minus {} differences: {}'.format(dict2_name, dict1_name, len(s2_minus_s1)))
-
-        # Compute intersection of O365 and OPM and print summary
-        intersect = set(s1).intersection(set(s2))
-        print('\tIntersections: {}'.format(len(intersect)))
-        print()
         
-        # Write differences and intersection to CSV files (and include all data elements of the DataFrame)
-        # Write intersection using o365 DataFrame
-        o365_df[ o365_df['User principal name'].isin(s1_minus_s2) ].sort_values(by='Last name').to_csv(r'{}\{}-O365-minus-OPM.csv'.format(DATE, k), index=False)
-        opm_df[ opm_df['Email'].isin(s2_minus_s1) ].sort_values(by='Last Name').to_csv(r'{}\{}-OPM-minus-O365.csv'.format(DATE, k), index=False)
-        o365_df[ o365_df['User principal name'].isin(intersect) ].sort_values(by='Last name').to_csv(r'{}\{}-intersection.csv'.format(DATE, k), index=False)
+        # Compute symmetric difference        
+        res = o365_df.merge(opm_df, 
+                            how='outer', 
+                            left_on='User principal name', 
+                            right_on='Email', 
+                            suffixes=('_o365', '_opm'), 
+                            indicator='source'
+                            )[['Department', 'Display name', 'First name_o365', 'Last name_o365', 'Licenses', 'User principal name', 
+                            'When created', 'Cabinet', 'Last name_opm', 'First name_opm', 'Email', 'Essentials License (Project Plan Essential)',
+                            'Professional (Project Plan 3)', 'Power BI', 'Premium (Project Plan 5)', 'Owner', 'Issue Date', 'source']]
+        symmetric_diff_df = res.loc[res['source'] != 'both']
+
+        # Make clear which license list the difference is from
+        symmetric_diff_df.replace({'source': {'left_only': 'o365', 'right_only': 'opm'}}, inplace=True)
+
+        # Write symmetric_diff_df to Excel file
+        symmetric_diff_df.to_excel(r'{}\{}_diffs.xlsx'.format(DATE, k), index=False)
+
     return
 
 def main():
@@ -174,8 +154,9 @@ def main():
     # Read OPM's Granted Licenses list
     opm_license_lists = read_in_opm_license_list()
 
-    # Find differences between the O365 Team's and OPM's license lists
+    # Compare license lists: O365 Team's versus OPM's
     compare_license_lists(o365_license_lists, opm_license_lists)
+
     return
 
 main()
