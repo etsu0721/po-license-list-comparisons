@@ -1,5 +1,5 @@
 # Description
-This script finds the differences between the lists of Project Online and Power BI licensed users maintained by the Office 365 Team and the Project Management Branch. A summary of the differences are displayed in the terminal after successful running the script. A character-by-character match on user emails, alone, is used as the basis for finding differences. The differences (in both directions) found for each license type are written as separate CSV files to the folder created for the running of the script. Given that there are four (4) lincense types, there are 4 x 2 = 8 files written.
+This script finds the differences, by way of a symmetric difference, between the lists of Project Online and Power BI licensed users maintained by the Office 365 Team and the Project Online Admin Team. A summary of the differences is written to a text file after successful execution: comparison_summary.txt. A character-by-character match on user emails, alone, is used as the basis for comparison. The differences for each license type are written to a separate Excel file in the folder created for script execution. Given that there are four (4) lincense types, there are <img src="https://render.githubusercontent.com/render/math?math=4 \times 1 = 4"> files written.
 
 # Run instructions
 To run *compare-license-lists.py*, follow these steps:
