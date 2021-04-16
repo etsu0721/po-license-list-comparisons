@@ -47,7 +47,7 @@ def partition_opm_license_list(df):
     Returns:
         dictionary: OPM Granted Licenses list partitioned by license type
     """
-    license_list_dict = dict()
+    license_list_dict = {}
     license_list_dict['PBI'] = df[ ~df['Power BI'].isna() ]
     license_list_dict['P1'] = df[ ~df['Essentials License (Project Plan Essential)'].isna() ]
     license_list_dict['P3'] = df[ ~df['Professional (Project Plan 3)'].isna() ]
@@ -116,6 +116,9 @@ def compare_license_lists(dict1, dict2):
         dict1 (dictionary): O365's license lists dictionary
         dict2 (dictionary): OPM's license lists dictionary
     """
+    # Open text file to store comparison summary
+    f = open(r'{}\comparison_summary.txt'.format(DATE), 'w')
+
     for k in dict1.keys():
         # Store license type DataFrame ina variable (for readability)
         o365_df = dict1[k]
@@ -136,8 +139,17 @@ def compare_license_lists(dict1, dict2):
         # Make clear which license list the difference is from
         symmetric_diff_df.replace({'source': {'left_only': 'o365', 'right_only': 'opm'}}, inplace=True)
 
+        # Write summary of comparison to file object for comparison_summary
+        o365_minus_opm_len = symmetric_diff_df[symmetric_diff_df['source'] == 'o365'].shape[0]
+        opm_minus_o365_len = symmetric_diff_df[symmetric_diff_df['source'] == 'opm'].shape[0]
+        str_2_write = '{}:\n\t O365 - OPM = {}\n\t OPM - O365 = {}\n'.format(k, o365_minus_opm_len, opm_minus_o365_len)
+        f.write(str_2_write)
+
         # Write symmetric_diff_df to Excel file
         symmetric_diff_df.to_excel(r'{}\{}_diffs.xlsx'.format(DATE, k), index=False)
+    
+    # Close file object for comparison_summary
+    f.close()
 
     return
 
