@@ -11,8 +11,8 @@ def clean_o365_license_list(df):
     This function takes in an Office 365 license list (as a DataFrame) and cleans various aspects and then returns the cleaned list.
     
     Parameters
-    ------
-    df :  pandas DataFrame
+    ----------
+    df : pandas DataFrame
 
     Returns
     -------
@@ -25,11 +25,13 @@ def clean_o365_license_list(df):
 def clean_opm_license_list(df):
     """This function takes the OPM Granted Licenses list (as a DataFrame) as input and cleans various aspects of it before returning it. 
 
-    Args:
-        df (DataFrame): OPM Granted Licenses list
+    Parameters
+    ----------
+    df (DataFrame) : OPM Granted Licenses list
 
-    Returns:
-        DataFrame: df after being cleaned.
+    Returns
+    -------
+    df (DataFrame) : df after being cleaned.
     """
     # Include only rows where 'Removed' is False
     df = df[ df['Removed'] == False ]
@@ -41,11 +43,13 @@ def clean_opm_license_list(df):
 def partition_opm_license_list(df):
     """This function partitions the OPM Granted Licenses list by license type, storing the result in a Python dictionary.
 
-    Args:
-        df (DataFrame): OPM Granted Licenses list
+    Parameters
+    ----------
+    df (DataFrame): OPM Granted Licenses list
 
-    Returns:
-        dictionary: OPM Granted Licenses list partitioned by license type
+    Returns
+    -------
+    license_list_dict (dict): OPM Granted Licenses list partitioned by license type
     """
     license_list_dict = {}
     license_list_dict['PBI'] = df[ ~df['Power BI'].isna() ]
@@ -57,8 +61,9 @@ def partition_opm_license_list(df):
 def read_in_users_to_ignore():
     """This function reads in a list of emails to ignore during the comparison and returns the list as a DataFrame.
 
-    Returns:
-        DataFrame: DataFrame of emails to ignore during license list comparison
+    Returns
+    -------
+    df (DataFrame) : Emails to ignore during license list comparison
     """
     df = pd.read_csv('licensed_users_to_ignore.csv', usecols=['User principal name'])
     df['email'] = df['User principal name'].str.lower()
@@ -67,12 +72,14 @@ def read_in_users_to_ignore():
 def drop_users_to_ignore(ignore, license_lists):
     """This function drops the users to ignore during the comparison from each license type list.
 
-    Args:
-        ignore (DataFrame): DataFrame of users to ignore during comparison
-        license_lists (dictionary): dictionary of DataFrames, one for each license type 
+    Parameters
+    ----------
+    ignore (DataFrame) : Users to ignore during comparison
+    license_lists (dict) : dictionary of DataFrames, one for each license type 
 
-    Returns:
-        dictionary : same as input minus DataFrame records whose email matched an email in the *ignore* DataFrame
+    Returns
+    -------
+    license_lists (dict) : same as input minus DataFrame records whose email matched an email in the *ignore* DataFrame
     """
     for license in license_lists.keys():
         license_lists[license] = license_lists[license][ ~license_lists[license]['User principal name'].isin(ignore['email']) ]
@@ -89,7 +96,7 @@ def read_in_o365_licenses(*licenses):
 
     Returns
     -------
-    license_lists_dict : Python dictionary of pandas DataFrames
+    license_lists_dict (dict) : Python dictionary of pandas DataFrames
     """
     license_lists_dict = dict()
     for license in licenses:
@@ -100,8 +107,9 @@ def read_in_o365_licenses(*licenses):
 def read_in_opm_license_list():
     """This function reads in the OPM Granted Licenses list from an Excel Workbook and returns a dictionary of license lists with license types as keys.
 
-    Returns:
-        dictionary: OPM Granted Licenses list partitioned by license type (and the keys are the license types matching the keys of O365's license list dict)
+    Returns
+    -------
+    license_list_dict (dict) : OPM Granted Licenses list partitioned by license type (and the keys are the license types matching the keys of O365's license list dict)
     """
     fname = 'PWA Licenses Tracker.xlsx'
     df = pd.read_excel(fname, sheet_name='Granted Licenses', engine='openpyxl')
@@ -109,20 +117,21 @@ def read_in_opm_license_list():
     license_list_dict = partition_opm_license_list(df)
     return license_list_dict
 
-def compare_license_lists(dict1, dict2):
+def compare_license_lists(o365_dict, opm_dict):
     """This function computes a symmetric difference for each license list type and writes the results to Excel files
 
-    Args:
-        dict1 (dictionary): O365's license lists dictionary
-        dict2 (dictionary): OPM's license lists dictionary
+    Parameters
+    ----------
+    o365_dict (dictionary): O365's license lists dictionary
+    opm_dict (dictionary): OPM's license lists dictionary
     """
     # Open text file to store comparison summary
     f = open(r'{}\comparison_summary.txt'.format(DATE), 'w')
 
-    for k in dict1.keys():
+    for k in o365_dict.keys():
         # Store license type DataFrame ina variable (for readability)
-        o365_df = dict1[k]
-        opm_df = dict2[k]
+        o365_df = o365_dict[k]
+        opm_df = opm_dict[k]
         
         # Compute symmetric difference        
         res = o365_df.merge(opm_df, 
