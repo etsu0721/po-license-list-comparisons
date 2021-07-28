@@ -18,8 +18,7 @@ def clean_o365_license_list(df):
     -------
     df : pandas DataFrame
     """
-    # Cast 'User principal name' (i.e., email address) to all lowercase
-    df['User principal name'] = df['User principal name'].str.lower()
+    df['User principal name'] = df['User principal name'].str.lower().str.strip()
     return df
 
 def clean_opm_license_list(df):
@@ -33,11 +32,8 @@ def clean_opm_license_list(df):
     -------
     df (DataFrame) : df after being cleaned.
     """
-    # Include only rows where 'Removed' is False
     df = df[ df['Removed'] == False ]
-
-    # Cast 'Email' to all lowercase
-    df['Email'] = df['Email'].str.lower()
+    df['Email'] = df['Email'].str.lower().str.strip()
     return df
 
 def partition_opm_license_list(df):
@@ -66,7 +62,7 @@ def read_in_users_to_ignore():
     df (DataFrame) : Emails to ignore during license list comparison
     """
     df = pd.read_csv('licensed_users_to_ignore.csv', usecols=['User principal name'])
-    df['email'] = df['User principal name'].str.lower()
+    df['email'] = df['User principal name'].str.lower().str.strip()
     return df
 
 def drop_users_to_ignore(ignore, license_lists):
